@@ -5,6 +5,10 @@ import model.TypeCompte;
 import service.AuthentificationService;
 import service.CompteService;
 import exception.CompteInexistantException;
+import model.Compte;
+import service.TransactionService;
+import exception.MontantInvalideException;
+import exception.SoldeInsuffisantException;
 
 import java.util.ArrayList;
 import java.util.Scanner;
@@ -152,9 +156,9 @@ public class Main {
         }
     }
 
-    private static void menuClient(
-            Scanner scanner,
-            Client client) {
+    private static void menuClient(Scanner scanner, Client client) {
+
+        TransactionService transactionService = new TransactionService();
 
         boolean continuer = true;
 
@@ -175,31 +179,121 @@ public class Main {
             switch (choix) {
 
                 case 1:
-                    System.out.println(
-                            "Nombre de comptes : "
-                                    + client.getComptes().size()
-                    );
+                    System.out.println("Nombre de comptes : " + client.getComptes().size());
+                    for (Compte c : client.getComptes().values()) {
+                        System.out.println(
+                                c.getNumeroCompte() + " | " + c.getTypeCompte()
+                                        + " | Solde : " + c.getSolde() + " €"
+                        );
+                    }
                     break;
 
-                case 2:
-                    System.out.println("Dépôt : fonctionnalité à connecter.");
-                    break;
+                case 2: {
+                    System.out.print("Numéro du compte : ");
+                    String numeroCompte = scanner.nextLine();
 
-                case 3:
-                    System.out.println("Retrait : fonctionnalité à connecter.");
-                    break;
+                    Compte compte = client.getComptes().get(numeroCompte);
 
-                case 4:
-                    System.out.println(
-                            "Virement : fonctionnalité à connecter."
-                    );
-                    break;
+                    if (compte == null) {
+                        System.out.println("Erreur : ce compte n'existe pas.");
+                        break;
+                    }
 
-                case 5:
-                    System.out.println(
-                            "Relevé : fonctionnalité à connecter."
-                    );
+                    System.out.print("Montant à déposer : ");
+                    double montant = scanner.nextDouble();
+                    scanner.nextLine();
+
+                    try {
+                        transactionService.deposer(compte, montant);
+                    } catch (MontantInvalideException e) {
+                        System.out.println("Erreur : " + e.getMessage());
+                    }
                     break;
+                }
+
+                case 3: {
+                    System.out.print("Numéro du compte : ");
+                    String numeroCompte = scanner.nextLine();
+
+                    Compte compte = client.getComptes().get(numeroCompte);
+
+                    if (compte == null) {
+                        System.out.println("Erreur : ce compte n'existe pas.");
+                        break;
+                    }
+
+                    System.out.print("Montant à retirer : ");
+                    double montant = scanner.nextDouble();
+                    scanner.nextLine();
+
+                    try {
+                        transactionService.retirer(compte, montant);
+                    } catch (MontantInvalideException | SoldeInsuffisantException e) {
+                        System.out.println("Erreur : " + e.getMessage());
+                    }
+                    break;
+                }
+
+                case 4: {
+                    System.out.print("Numéro du compte source : ");
+                    String numeroSource = scanner.nextLine();
+
+                    Compte compteSource = client.getComptes().get(numeroSource);
+
+                    if (compteSource == null) {
+                        System.out.println("Erreur : ce compte source n'existe pas.");
+                        break;
+                    }
+
+                    System.out.print("Numéro du compte destination : ");
+                    String numeroDestination = scanner.nextLine();
+
+                    Compte compteDestination = client.getComptes().get(numeroDestination);
+
+                    if (compteDestination == null) {
+                        System.out.println("Erreur : ce compte destination n'existe pas.");
+                        break;
+                    }
+
+                    System.out.print("Montant à virer : ");
+                    double montant = scanner.nextDouble();
+                    scanner.nextLine();
+
+                    try {
+                        transactionService.virer(compteSource, compteDestination, montant);
+                    } catch (MontantInvalideException | SoldeInsuffisantException e) {
+                        System.out.println("Erreur : " + e.getMessage());
+                    }
+                    break;
+                }
+                case 5: {
+                    System.out.print("Numéro du compte : ");
+                    String numeroCompte = scanner.nextLine();
+
+                    Compte compte = client.getComptes().get(numeroCompte);
+
+                    if (compte == null) {
+                        System.out.println("Erreur : ce compte n'existe pas.");
+                        break;
+                    }
+
+                    try {
+                        Scanner lecteurFichier = new Scanner(
+                                new java.io.File("releve_" + compte.getNumeroCompte() + ".txt")
+                        );
+
+                        while (lecteurFichier.hasNextLine()) {
+                            System.out.println(lecteurFichier.nextLine());
+                        }
+
+                        lecteurFichier.close();
+
+                    } catch (java.io.FileNotFoundException e) {
+                        System.out.println("Aucun relevé trouvé pour ce compte (aucune opération effectuée).");
+                    }
+
+                    break;
+                }
 
                 case 6:
                     continuer = false;
