@@ -1,6 +1,10 @@
 import model.Client;
+import model.Compte;
 import model.Gestionnaire;
+import model.TypeCompte;
 import service.AuthentificationService;
+import service.CompteService;
+import exception.CompteInexistantException;
 
 import java.util.ArrayList;
 import java.util.Scanner;
@@ -14,22 +18,22 @@ public class Main {
         ArrayList<Client> clients = new ArrayList<>();
         ArrayList<Gestionnaire> gestionnaires = new ArrayList<>();
 
-        // Client de test
+        // Client  test
         Client client = new Client(
                 1,
-                "Dupont",
-                "Jean",
-                "jean@gmail.com",
+                "testclient",
+                "client",
+                "testclient@gmail.com",
                 "1234"
         );
 
         clients.add(client);
 
-        // Gestionnaire de test
+        // Gestionnaire test
         Gestionnaire gestionnaire = new Gestionnaire(
                 1,
                 "Admin",
-                "Nexa",
+                "test",
                 "admin@nexabank.com",
                 "admin123"
         );
@@ -66,6 +70,7 @@ public class Main {
                     connexionGestionnaire(
                             scanner,
                             gestionnaires,
+                            clients,
                             authentificationService
                     );
                     break;
@@ -117,6 +122,7 @@ public class Main {
     private static void connexionGestionnaire(
             Scanner scanner,
             ArrayList<Gestionnaire> gestionnaires,
+            ArrayList<Client> clients,
             AuthentificationService authentificationService) {
 
         System.out.println("\n===== CONNEXION GESTIONNAIRE =====");
@@ -140,7 +146,7 @@ public class Main {
                             + gestionnaire.getNom() + " !"
             );
 
-            menuGestionnaire(scanner);
+            menuGestionnaire(scanner, clients);
         } else {
             System.out.println("Email ou mot de passe incorrect.");
         }
@@ -206,7 +212,9 @@ public class Main {
         }
     }
 
-    private static void menuGestionnaire(Scanner scanner) {
+    private static void menuGestionnaire(Scanner scanner, ArrayList<Client> clients) {
+
+        CompteService compteService = new CompteService();
 
         boolean continuer = true;
 
@@ -225,28 +233,74 @@ public class Main {
 
             switch (choix) {
 
-                case 1:
-                    System.out.println(
-                            "Création : fonctionnalité à connecter."
-                    );
-                    break;
+                case 1: {
+                    Client c = trouverClientParId(scanner, clients);
 
-                case 2:
-                    System.out.println(
-                            "Modification : fonctionnalité à connecter."
-                    );
-                    break;
+                    if (c == null) break;
 
-                case 3:
-                    System.out.println(
-                            "Clôture : fonctionnalité à connecter."
-                    );
+                    System.out.print("Numéro du nouveau compte : ");
+                    String numeroCompte = scanner.nextLine();
+
+                    System.out.println("Type de compte (1=COURANT, 2=EPARGNE) : ");
+                    int typeChoix = scanner.nextInt();
+                    scanner.nextLine();
+
+                    TypeCompte type = (typeChoix == 2)
+                            ? TypeCompte.EPARGNE
+                            : TypeCompte.COURANT;
+
+                    compteService.creerCompte(c, numeroCompte, type);
                     break;
+                }
+
+                case 2: {
+                    Client c = trouverClientParId(scanner, clients);
+
+                    if (c == null) break;
+
+                    System.out.print("Numéro du compte à modifier : ");
+                    String numeroCompte = scanner.nextLine();
+
+                    System.out.println("Nouveau type (1=COURANT, 2=EPARGNE) : ");
+                    int typeChoix = scanner.nextInt();
+                    scanner.nextLine();
+
+                    TypeCompte nouveauType = (typeChoix == 2)
+                            ? TypeCompte.EPARGNE
+                            : TypeCompte.COURANT;
+
+                    try {
+                        compteService.modifierCompte(c, numeroCompte, nouveauType);
+                    } catch (CompteInexistantException e) {
+                        System.out.println("Erreur : " + e.getMessage());
+                    }
+                    break;
+                }
+
+                case 3: {
+                    Client c = trouverClientParId(scanner, clients);
+
+                    if (c == null) break;
+
+                    System.out.print("Numéro du compte à clôturer : ");
+                    String numeroCompte = scanner.nextLine();
+
+                    try {
+                        compteService.cloturerCompte(c, numeroCompte);
+                    } catch (CompteInexistantException e) {
+                        System.out.println("Erreur : " + e.getMessage());
+                    }
+                    break;
+                }
 
                 case 4:
-                    System.out.println(
-                            "Consultation des clients : fonctionnalité à connecter."
-                    );
+                    for (Client c : clients) {
+                        System.out.println(
+                                "ID: " + c.getIdClient()
+                                        + " | " + c.getPrenom() + " " + c.getNom()
+                                        + " | Comptes : " + c.getComptes().size()
+                        );
+                    }
                     break;
 
                 case 5:
@@ -258,5 +312,21 @@ public class Main {
                     System.out.println("Choix invalide.");
             }
         }
+    }
+
+    private static Client trouverClientParId(Scanner scanner, ArrayList<Client> clients) {
+
+        System.out.print("ID du client : ");
+        int idClient = scanner.nextInt();
+        scanner.nextLine();
+
+        for (Client c : clients) {
+            if (c.getIdClient() == idClient) {
+                return c;
+            }
+        }
+
+        System.out.println("Erreur : aucun client trouvé avec cet ID.");
+        return null;
     }
 }
