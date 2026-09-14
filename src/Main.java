@@ -266,34 +266,7 @@ public class Main {
                     }
                     break;
                 }
-                case 5: {
-                    System.out.print("Numéro du compte : ");
-                    String numeroCompte = scanner.nextLine();
-
-                    Compte compte = client.getComptes().get(numeroCompte);
-
-                    if (compte == null) {
-                        System.out.println("Erreur : ce compte n'existe pas.");
-                        break;
-                    }
-
-                    try {
-                        Scanner lecteurFichier = new Scanner(
-                                new java.io.File("releve_" + compte.getNumeroCompte() + ".txt")
-                        );
-
-                        while (lecteurFichier.hasNextLine()) {
-                            System.out.println(lecteurFichier.nextLine());
-                        }
-
-                        lecteurFichier.close();
-
-                    } catch (java.io.FileNotFoundException e) {
-                        System.out.println("Aucun relevé trouvé pour ce compte (aucune opération effectuée).");
-                    }
-
-                    break;
-                }
+                case 5:
 
                 case 6:
                     continuer = false;
