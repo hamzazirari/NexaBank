@@ -1,10 +1,10 @@
 package model;
 
 public abstract class Personne {
-    private String nom;
-    private String prenom;
-    private String email;
-    private String motDePasse;
+    protected String nom;
+    protected String prenom;
+    protected String email;
+    protected String motDePasse;
 
     public Personne(String nom, String prenom, String email, String motDePasse){
         this.nom=nom;
